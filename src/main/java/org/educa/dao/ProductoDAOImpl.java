@@ -16,8 +16,7 @@ import java.util.List;
 public class ProductoDAOImpl implements ProductoDAO {
     @Override
     public List<ProductoEntity> readFile(String fileXml) {
-        List<ProductoEntity> product;
-        product = new ArrayList<>();
+        List<ProductoEntity> product =new ArrayList<>();
         try {
             JAXBContext productContext = JAXBContext.newInstance(Productos.class);
             Unmarshaller unmarshaller = productContext.createUnmarshaller();
@@ -38,7 +37,7 @@ public class ProductoDAOImpl implements ProductoDAO {
         } catch (JAXBException e) {
             throw new RuntimeException(e);
         }
-        return List.of();
+        return product;
     }
 
 
