@@ -6,10 +6,14 @@ import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
 import org.educa.entity.ProductoEntity;
+import org.educa.entity.SummaryEntity;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +42,11 @@ public class ProductoDAOImpl implements ProductoDAO {
             throw new RuntimeException(e);
         }
         return product;
+    }
+
+    @Override
+    public void exportSummary(String ruta, SummaryEntity summaryEntity) throws IOException {
+        Files.write(Paths.get(ruta), (summaryEntity.toPrint()).getBytes());
     }
 
 
