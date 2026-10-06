@@ -23,6 +23,7 @@ public class ProductoService {
 
     /**
      * Esta funcion lee el fichero xml
+     *
      * @param fileXml nombre del fichero xml que se pasa en el main
      * @return devuelve el dao ejecutando la lectura
      * @throws JAXBException Excepcion para File
@@ -33,7 +34,8 @@ public class ProductoService {
 
     /**
      * Metodo para exportar un resumen del fichero Xml
-     * @param path ruta para la creacion del fichero Txt
+     *
+     * @param path    ruta para la creacion del fichero Txt
      * @param fileXml ruta para el fichero Xml
      * @throws IOException excepcion de salida de File
      */
@@ -66,10 +68,11 @@ public class ProductoService {
 
     /**
      * Este es un metodo que sirve para exportar a excel
-     * @param path la ruta donde se guarda mi excel
+     *
+     * @param path    la ruta donde se guarda mi excel
      * @param fileXml fichero xml del cual obtengo los datos
-     * @throws JAXBException excepcion de JAXB
-     * @throws IOException Excepcion de salida
+     * @throws JAXBException  excepcion de JAXB
+     * @throws IOException    Excepcion de salida
      * @throws ParseException Excepcion de parse
      */
 
@@ -88,7 +91,7 @@ public class ProductoService {
 
     }
 
-    private void crearArchivoExcel(List<ProductoEntity> productoEntities, String absolutePath) throws IOException{
+    private void crearArchivoExcel(List<ProductoEntity> productoEntities, String absolutePath) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Vehículos");
 
@@ -164,7 +167,6 @@ public class ProductoService {
             sheet.autoSizeColumn(i);
         }
     }
-
 
 
     private void crearCabecera(Sheet sheet, CellStyle headerStyle) {
@@ -251,11 +253,9 @@ public class ProductoService {
     }
 
 
-
-
     private BigDecimal calcularBeneficioTotal(List<ProductoEntity> productoEntities) {
         BigDecimal beneficioTotal = BigDecimal.ZERO;
-        for(ProductoEntity producto : productoEntities){
+        for (ProductoEntity producto : productoEntities) {
             beneficioTotal = beneficioTotal.add(producto.getProfit());
         }
 
