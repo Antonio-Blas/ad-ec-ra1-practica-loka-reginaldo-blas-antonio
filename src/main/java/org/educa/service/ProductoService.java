@@ -1,5 +1,6 @@
 package org.educa.service;
 
+import generated.Producto;
 import jakarta.xml.bind.JAXBException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -12,6 +13,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -77,7 +79,7 @@ public class ProductoService {
      */
 
     public void exportExcel(String path, String fileXml) throws JAXBException, IOException, ParseException {
-        List<ProductoEntity> productoEntities = productoDAO.readFile(fileXml);
+        List<ProductoEntity> producto = productoDAO.readFile(fileXml);
 
         File xmlFIle = new File(fileXml);
         String nameFile = xmlFIle.getName();
@@ -87,13 +89,13 @@ public class ProductoService {
         String absolutePath = Paths.get(path, outputFileName).toString();
 
         crearDirectorioSiNoExiste(path);
-        crearArchivoExcel(productoEntities, absolutePath);
+        crearArchivoExcel(producto, absolutePath);
 
     }
 
-    private void crearArchivoExcel(List<ProductoEntity> productoEntities, String absolutePath) throws IOException {
+    private void crearArchivoExcel(List<ProductoEntity> productos, String absolutePath) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet("Vehículos");
+            Sheet sheet = workbook.createSheet("Productos");
 
             CellStyle headerStyle = crearEstiloCabecera(workbook);
             CellStyle estiloFilaPar = crearEstiloFilaPar(workbook);
@@ -104,13 +106,13 @@ public class ProductoService {
             crearCabecera(sheet, headerStyle);
 
             int rowNum = 1;
-            for (int i = 0; i < productoEntities.size(); i++) {
-                ProductoEntity producto = productoEntities.get(i);
+            for (int i = 0; i < productos.size(); i++) {
+                ProductoEntity producto = productos.get(i);
                 Row row = sheet.createRow(rowNum++);
 
                 CellStyle estiloFila = (i % 2 == 0) ? estiloFilaPar : estiloFilaImpar;
 
-                llenarFilaProducto(row, productoEntities, estiloFila, estiloMoneda, estiloPorcentaje);
+                llenarFilaProducto(row, producto, estiloFila, estiloMoneda, estiloPorcentaje);
             }
 
             autoajustarColumnas(sheet);
@@ -121,45 +123,60 @@ public class ProductoService {
         }
     }
 
-    private void llenarFilaProducto(Row row, List<ProductoEntity> productoEntities, CellStyle estiloFila, CellStyle estiloMoneda, CellStyle estiloPorcentaje) {
+    private void llenarFilaProducto(Row row, ProductoEntity producto, CellStyle estiloFila, CellStyle estiloMoneda, CellStyle estiloPorcentaje) {
         Cell cell0 = row.createCell(0);
-        cell0.setCellValue(Producto.getProducto().getMatricula());
+        cell0.setCellValue(producto.getProducto().getMarca());
+        cell0.setCellStyle(estiloFila);
         cell0.setCellStyle(estiloFila);
 
         Cell cell1 = row.createCell(1);
-        cell1.setCellValue(Producto.getProducto().getBastidor());
+        cell1.setCellValue(producto.getProducto().getModelo());
+        cell1.setCellStyle(estiloFila);
         cell1.setCellStyle(estiloFila);
 
         Cell cell2 = row.createCell(2);
-        cell2.setCellValue(Producto.getProducto().getPrecio().doubleValue());
+        cell2.setCellValue(producto.getProducto().getCategoria());
         cell2.setCellStyle(estiloMoneda);
         cell2.setCellStyle(estiloFila);
 
         Cell cell3 = row.createCell(3);
-        BigDecimal descuentoPorcentaje = Producto.getProducto().getDescuento().divide(BigDecimal.valueOf(100), RoundingMode.CEILING);
-        cell3.setCellValue(descuentoPorcentaje.doubleValue());
-        cell3.setCellStyle(estiloPorcentaje);
+        cell3.setCellValue(producto.getProducto().getAnioLanzamiento());
+        cell3.setCellStyle(estiloMoneda);
         cell3.setCellStyle(estiloFila);
 
         Cell cell4 = row.createCell(4);
-        cell4.setCellValue(Producto.getPrecioFinal().doubleValue());
+        cell4.setCellValue(producto.getProducto().getGarantiaMeses());
         cell4.setCellStyle(estiloMoneda);
         cell4.setCellStyle(estiloFila);
 
         Cell cell5 = row.createCell(5);
-        cell5.setCellValue(Producto.getProducto().getCostes().getCostesDirectos().doubleValue());
+        cell5.setCellValue(producto.getProducto().getProveedor().getCiudad());
         cell5.setCellStyle(estiloMoneda);
         cell5.setCellStyle(estiloFila);
 
         Cell cell6 = row.createCell(6);
-        cell6.setCellValue(Producto.getProducto().getCostes().getCostesIndirectos().doubleValue());
+        cell6.setCellValue(producto.getProducto().getPrecio().doubleValue());
         cell6.setCellStyle(estiloMoneda);
         cell6.setCellStyle(estiloFila);
 
         Cell cell7 = row.createCell(7);
-        cell7.setCellValue(Producto.getProfit().doubleValue());
-        cell7.setCellStyle(estiloMoneda);
+        BigDecimal descuentoPorcentaje = producto.getProducto().getDescuento().divide(BigDecimal.valueOf(100), RoundingMode.CEILING);
+        cell7.setCellValue(descuentoPorcentaje.doubleValue());
+        cell7.setCellStyle(estiloPorcentaje);
         cell7.setCellStyle(estiloFila);
+
+        Cell cell8 = row.createCell(8);
+        cell8.setCellValue(producto.getProducto().getCostes().getCostesEnvio().doubleValue());
+        cell8.setCellStyle(estiloMoneda);
+        cell8.setCellStyle(estiloFila);
+
+        Cell cell9 = row.createCell(9);
+        cell9.setCellValue(producto.getPrecioFinal().doubleValue());
+        cell9.setCellStyle(estiloMoneda);
+        cell9.setCellStyle(estiloFila);
+
+
+
     }
 
     private void autoajustarColumnas(Sheet sheet) {
@@ -173,8 +190,9 @@ public class ProductoService {
         Row headerRow = sheet.createRow(0);
 
         String[] headers = {
-                "Matricula", "Bastidor", "Precio", "Descuento",
-                "Precio Final", "Costes directos", "Costes indirectos", "Beneficio"
+                "Marca", "Modelo", "Categoria", "Año de Lanzamiento",
+                "Garantia Meses", "Proveedor", "Precio", "Descuento",
+                "Costes",
         };
 
         for (int i = 0; i < headers.length; i++) {
