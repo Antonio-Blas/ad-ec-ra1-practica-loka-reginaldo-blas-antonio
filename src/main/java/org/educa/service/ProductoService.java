@@ -70,30 +70,28 @@ public class ProductoService {
 
     /**
      * Este es un metodo que sirve para exportar a excel
-     *
-     * @param path    la ruta donde se guarda mi excel
+     * @param path la ruta donde se guarda mi excel
      * @param fileXml fichero xml del cual obtengo los datos
-     * @throws JAXBException  excepcion de JAXB
+     * @throws JAXBException  Excepcion de JAXB
      * @throws IOException    Excepcion de salida
      * @throws ParseException Excepcion de parse
      */
 
     public void exportExcel(String path, String fileXml) throws JAXBException, IOException, ParseException {
-        List<ProductoEntity> producto = productoDAO.readFile(fileXml);
+        List<ProductoEntity> productoEntities = productoDAO.readFile(fileXml);
 
         File xmlFIle = new File(fileXml);
         String nameFile = xmlFIle.getName();
         String mesAnio = extraerMesAnio(nameFile);
 
-        String outputFileName = "export_" + mesAnio + ".xlsx";
+        String outputFileName = "export_" + mesAnio.replace(".xml", "") + ".xlsx";
         String absolutePath = Paths.get(path, outputFileName).toString();
 
-        crearDirectorioSiNoExiste(path);
-        crearArchivoExcel(producto, absolutePath);
+        crearArchivoExcel(productoEntities, absolutePath);
 
     }
 
-    private void crearArchivoExcel(List<ProductoEntity> productos, String absolutePath) throws IOException {
+    private void crearArchivoExcel(List<ProductoEntity> productoEntities, String absolutePath) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Productos");
 
@@ -106,8 +104,8 @@ public class ProductoService {
             crearCabecera(sheet, headerStyle);
 
             int rowNum = 1;
-            for (int i = 0; i < productos.size(); i++) {
-                ProductoEntity producto = productos.get(i);
+            for (int i = 0; i < productoEntities.size(); i++) {
+                ProductoEntity producto = productoEntities.get(i);
                 Row row = sheet.createRow(rowNum++);
 
                 CellStyle estiloFila = (i % 2 == 0) ? estiloFilaPar : estiloFilaImpar;
@@ -123,61 +121,48 @@ public class ProductoService {
         }
     }
 
-    private void llenarFilaProducto(Row row, ProductoEntity producto, CellStyle estiloFila, CellStyle estiloMoneda, CellStyle estiloPorcentaje) {
+    private void llenarFilaProducto(Row row, ProductoEntity productoEntities, CellStyle estiloFila, CellStyle estiloMoneda, CellStyle estiloPorcentaje) {
         Cell cell0 = row.createCell(0);
-        cell0.setCellValue(producto.getProducto().getMarca());
-        cell0.setCellStyle(estiloFila);
+        cell0.setCellValue(productoEntities.getProducto().getCodigo());
         cell0.setCellStyle(estiloFila);
 
         Cell cell1 = row.createCell(1);
-        cell1.setCellValue(producto.getProducto().getModelo());
-        cell1.setCellStyle(estiloFila);
+        cell1.setCellValue(productoEntities.getProducto().getNumeroSerie());
         cell1.setCellStyle(estiloFila);
 
         Cell cell2 = row.createCell(2);
-        cell2.setCellValue(producto.getProducto().getCategoria());
+        cell2.setCellValue(productoEntities.getProducto().getPrecio().doubleValue());
         cell2.setCellStyle(estiloMoneda);
         cell2.setCellStyle(estiloFila);
 
         Cell cell3 = row.createCell(3);
-        cell3.setCellValue(producto.getProducto().getAnioLanzamiento());
-        cell3.setCellStyle(estiloMoneda);
+        BigDecimal descuentoPorcentaje = productoEntities.getProducto().getDescuento().divide(BigDecimal.valueOf(100), RoundingMode.CEILING);
+        cell3.setCellValue(descuentoPorcentaje.doubleValue());
+        cell3.setCellStyle(estiloPorcentaje);
         cell3.setCellStyle(estiloFila);
 
         Cell cell4 = row.createCell(4);
-        cell4.setCellValue(producto.getProducto().getGarantiaMeses());
+        cell4.setCellValue(productoEntities.getPrecioFinal().doubleValue());
         cell4.setCellStyle(estiloMoneda);
         cell4.setCellStyle(estiloFila);
 
         Cell cell5 = row.createCell(5);
-        cell5.setCellValue(producto.getProducto().getProveedor().getCiudad());
+        cell5.setCellValue(productoEntities.getProducto().getCostes().getCostesEnvio().doubleValue());
         cell5.setCellStyle(estiloMoneda);
         cell5.setCellStyle(estiloFila);
 
         Cell cell6 = row.createCell(6);
-        cell6.setCellValue(producto.getProducto().getPrecio().doubleValue());
+        cell6.setCellValue(productoEntities.getProducto().getCostes().getCostesAlmacenaje().doubleValue());
         cell6.setCellStyle(estiloMoneda);
         cell6.setCellStyle(estiloFila);
 
         Cell cell7 = row.createCell(7);
-        BigDecimal descuentoPorcentaje = producto.getProducto().getDescuento().divide(BigDecimal.valueOf(100), RoundingMode.CEILING);
-        cell7.setCellValue(descuentoPorcentaje.doubleValue());
-        cell7.setCellStyle(estiloPorcentaje);
+        cell7.setCellValue(productoEntities.getProfit().doubleValue());
+        cell7.setCellStyle(estiloMoneda);
         cell7.setCellStyle(estiloFila);
-
-        Cell cell8 = row.createCell(8);
-        cell8.setCellValue(producto.getProducto().getCostes().getCostesEnvio().doubleValue());
-        cell8.setCellStyle(estiloMoneda);
-        cell8.setCellStyle(estiloFila);
-
-        Cell cell9 = row.createCell(9);
-        cell9.setCellValue(producto.getPrecioFinal().doubleValue());
-        cell9.setCellStyle(estiloMoneda);
-        cell9.setCellStyle(estiloFila);
-
-
-
     }
+
+
 
     private void autoajustarColumnas(Sheet sheet) {
         for (int i = 0; i < 8; i++) {
@@ -190,9 +175,8 @@ public class ProductoService {
         Row headerRow = sheet.createRow(0);
 
         String[] headers = {
-                "Marca", "Modelo", "Categoria", "Año de Lanzamiento",
-                "Garantia Meses", "Proveedor", "Precio", "Descuento",
-                "Costes",
+                "Codigo", "Numero de Serie", "Precio", "Descuento",
+                "Precio Final", "Costes Envio", "Costes Almacenaje", "Beneficio"
         };
 
         for (int i = 0; i < headers.length; i++) {
@@ -263,6 +247,17 @@ public class ProductoService {
         return style;
     }
 
+    private BigDecimal calcularBeneficioTotal(List<ProductoEntity> productoEntities) {
+        BigDecimal beneficioTotal = BigDecimal.ZERO;
+        for(ProductoEntity producto : productoEntities){
+            beneficioTotal = beneficioTotal.add(producto.getProfit());
+        }
+
+        return beneficioTotal;
+    }
+
+
+
     private void crearDirectorioSiNoExiste(String path) throws IOException {
         Path directorio = Paths.get(path);
         if (!Files.exists(directorio)) {
@@ -271,14 +266,7 @@ public class ProductoService {
     }
 
 
-    private BigDecimal calcularBeneficioTotal(List<ProductoEntity> productoEntities) {
-        BigDecimal beneficioTotal = BigDecimal.ZERO;
-        for (ProductoEntity producto : productoEntities) {
-            beneficioTotal = beneficioTotal.add(producto.getProfit());
-        }
 
-        return beneficioTotal;
-    }
 
     private String extraerMesAnio(String nombreSinExtension) {
         String[] partes = nombreSinExtension.split("_");
